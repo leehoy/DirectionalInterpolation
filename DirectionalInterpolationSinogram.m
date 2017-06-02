@@ -5,7 +5,7 @@
 nx=750;
 % ny=200;
 ny=170;
-f=fopen('0197.dat');
+f=fopen('Sinogram\170\NoiseFree\0088.dat');
 projection=fread(f,[nx ny],'float32');
 fclose(f);
 sino=projection;
@@ -66,8 +66,8 @@ for j=2:2:ny*2
         dd=zeros(size(xx));
         for kk=1:2
             tmp=zeros(size(xx));
-            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,kk,1).*xx;
-            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,kk,2).*yy;%inner product of a vector
+            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,1,kk).*xx;
+            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,2,kk).*yy;%inner product of a vector
 %             tmp=tmp+InterpolValues(:,:,kk,kk).*InterpolVectors(:,:,kk,3).*zz; 
             nn=tmp.^2; %sum them up for numerator
             dd=dd+InterpolValues(1,1,kk,kk).^2; % summation of eigen value for denominaor
@@ -122,8 +122,8 @@ for j=2:2:ny*2
         dd=zeros(size(xx));
         for kk=1:2
             tmp=zeros(size(xx));
-            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,kk,1).*xx;
-            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,kk,2).*yy;%inner product of a vector
+            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,1,kk).*xx;
+            tmp=tmp+InterpolValues(1,1,kk,kk).*InterpolVectors(1,1,2,kk).*yy;%inner product of a vector
             nn=tmp.^2; %sum them up for numerator
             dd=dd+InterpolValues(1,1,kk,kk).^2; % summation of eigen value for denominaor
         end
