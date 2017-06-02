@@ -6,9 +6,8 @@ nx=750;
 % ny=200;
 ny=170;
 f=fopen('Sinogram\170\NoiseFree\0088.dat');
-projection=fread(f,[nx ny],'float32');
+sino=fread(f,[nx ny],'float32');
 fclose(f);
-sino=projection';
 M=170;
 B=44.5059/2;
 PHI=2*pi;
@@ -17,9 +16,16 @@ d_umax=B*PHI/M;
 r=d_umax/a;
 sigma=5;
 window=10;
+% projection=zeros(nx,ny*2);
+% yq=1:ny*2;
+% y=1:2:ny*2;
+% for i=1:nx
+%     projection(i,:)=interp1(y,sino(i,:),yq,'linear','extrap');
+% end
+projection=sino;
 [J11,J12,J21,J22]=ImageOrientation2D_conv(projection,sigma,window);
 interpol_window=5;
-c=0.5;
+c=0.1;
 treshold1=0.001;
 Kmax=8;
 NewProjection=zeros(nx,ny*2);
@@ -34,19 +40,26 @@ RealCoord_w=RealCoord_w*(1.01/(2*pi));
 % end
 for j=2:2:ny*2
     for i=1:nx
-        x=i;
-        y=j/2+0.5;
+        x=(i-nx/2)*d_umax;
+        y=(j/2+0.5)*B/(2*pi);
         InterpolX=i-interpol_window+1:i+interpol_window;
         InterpolY=(j/2)-interpol_window+1:(j/2)+interpol_window;
-        J=[J11(i,j/2),J12(i,j/2);J21(i,j/2),J22(i,j/2)];
+        if(j==ny*2)
+            J=[(J11(i,j/2)+J11(i,1))/2,(J12(i,j/2)+J12(i,1))/2;(J21(i,j/2)+J21(i,1))/2,(J22(i,j/2)+J22(i,1))/2];
+        else
+            J=[(J11(i,j/2)+J11(i,j/2+1))/2,(J12(i,j/2)+J12(i,j/2+1))/2;(J21(i,j/2)+J21(i,j/2+1))/2,(J22(i,j/2)+J22(i,j/2+1))/2];
+        end
         [vec,val]=eig(J);
 %         InterpolX(InterpolX>nx)=InterpolX(InterpolX>nx)-nx;
 %         InterpolX(InterpolX<1)=InterpolX(InterpolX<1)+nx;
 %         InterpolY(InterpolY<1)=InterpolY(InterpolY<1)+ny;
 %         InterpolY(InterpolY>ny)=InterpolY(InterpolY>ny)-ny;
-        [xx,yy]=meshgrid(InterpolX,InterpolY);
+        [xx,yy]=meshgrid((InterpolX-nx/2)*d_umax,InterpolY*B/(2*pi));
         xx=xx-x;yy=yy-y;
         d=sqrt(xx.^2+yy.^2);
+        xx(d==0)=0;
+        yy(d==0)=0;
+        d(d==0)=1;
         xx=xx./d;yy=yy./d; % make the vectors to unit vector
         InterpolVectors=vec; % eigen vector of a pixel
         InterpolValues=val; %eigen value of a pixel
@@ -54,7 +67,7 @@ for j=2:2:ny*2
             y_point=InterpolY;
             InterpolY(InterpolY<1)=InterpolY(InterpolY<1)+ny;
             InterpolY(InterpolY>ny)=InterpolY(InterpolY>ny)-ny;
-            vq=interp1(y_point,projection(x,InterpolY),y);
+            vq=interp1(y_point,projection(i,InterpolY),j);
             NewProjection(i,j)=vq;
             continue;
         end
@@ -69,7 +82,7 @@ for j=2:2:ny*2
             tmp=tmp+InterpolValues(kk,kk).*InterpolVectors(1,kk).*xx;
             tmp=tmp+InterpolValues(kk,kk).*InterpolVectors(2,kk).*yy;%inner product of a vector
 %             tmp=tmp+InterpolValues(:,:,kk,kk).*InterpolVectors(:,:,kk,3).*zz; 
-            nn=tmp.^2; %sum them up for numerator
+            nn=nn+tmp.^2; %sum them up for numerator
             dd=dd+InterpolValues(kk,kk).^2; % summation of eigen value for denominaor
         end
         
@@ -82,11 +95,18 @@ for j=2:2:ny*2
     end
 end
 imshow(NewProjection,[]);
-projection2=NewProjection;
-ny=size(projection2,2);
+
+ny=size(NewProjection,2);
+projection2=zeros(nx,ny*2);
+yq=1:ny*2;
+y=1:2:2*ny;
+% for i=1:nx
+%     projection2(i,:)=interp1(y,NewProjection(i,:),yq,'linear','extrap');
+% end
 % sigma=5;
 % window=10;
 % nz=size(projection2,3);
+projection2=NewProjection;
 [J11,J12,J21,J22]=ImageOrientation2D_conv(projection2,sigma,window);
 interpol_window=5;
 % c=0.5;
@@ -97,14 +117,17 @@ NewProjection_Dir(:,1:2:end)=projection2(:,:);
 for j=2:2:ny*2
     for i=1:nx
         x=i;
-        y=j/2+0.5;
+        y=j;
         InterpolX=i-interpol_window+1:i+interpol_window;
-        InterpolY=(j/2)-interpol_window+1:(j/2)+interpol_window;
-        J=[J11(i,j/2),J12(i,j/2);J21(i,j/2),J22(i,j/2)];
+        InterpolY=(j)-interpol_window+1:(j)+interpol_window;
+        J=[J11(i,j),J12(i,j);J21(i,j),J22(i,j)];
         [vec,val]=eig(J);
         [xx,yy]=meshgrid(InterpolX,InterpolY);
         xx=xx-x;yy=yy-y;
         d=sqrt(xx.^2+yy.^2);
+        xx(d==0)=0;
+        yy(d==0)=0;
+        d(d==0)=1;
         xx=xx./d;yy=yy./d; % make the vectors to unit vector
         InterpolVectors=vec; % eigen vector of a pixel
         InterpolValues=val; %eigen value of a pixel
@@ -112,14 +135,14 @@ for j=2:2:ny*2
             y_point=InterpolY;
             InterpolY(InterpolY<1)=InterpolY(InterpolY<1)+ny;
             InterpolY(InterpolY>ny)=InterpolY(InterpolY>ny)-ny;
-            vq=interp1(y_point,projection2(x,InterpolY),y);
+            vq=interp1(y_point,projection2(i,InterpolY),j);
             NewProjection_Dir(i,j)=vq;
             continue;
         end
         InterpolX(InterpolX>nx)=InterpolX(InterpolX>nx)-nx;
         InterpolX(InterpolX<1)=InterpolX(InterpolX<1)+nx;
         InterpolY(InterpolY<1)=InterpolY(InterpolY<1)+ny;
-        InterpolY(InterpolY>ny)=InterpolY(InterpolY>ny)-ny;
+        InterpolY(InterpolY>ny)=InterpolY(InterpolY>ny*2)-ny;
         nn=zeros(size(xx));
         dd=zeros(size(xx));
         for kk=1:2

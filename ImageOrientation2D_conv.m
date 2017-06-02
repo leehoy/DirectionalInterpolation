@@ -1,8 +1,6 @@
 function [ J11,J12,J21,J22] = ImageOrientation2D_conv( image,sigma,window)
 %Image orientation function for 2d sinogram case
 % z-direction in omitted
-J=zeros([2,2]);
-
 % [G1,G2]=imgradientxy(image(:,:,k));
 % G3=image(:,:,k)-image(:,:,k+1);
 % image=image';
