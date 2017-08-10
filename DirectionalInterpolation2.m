@@ -24,7 +24,7 @@ window=10;
 interpol_window=5;
 c=0.5;
 treshold1=0.001;
-Kmax=8;
+
 NewProjection=zeros(nx,ny,nz*2);
 for k=1:nz
     NewProjection(:,:,(k-1)*2+1)=projection(:,:,k);

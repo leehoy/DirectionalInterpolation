@@ -24,7 +24,8 @@ sino=projection;
 % imshow(sino(:,:,10),[])
 sigma=5;
 window=10;
-[Vectors,Values]=ImageOrientation2D(projection,sigma,window);
+% [Vectors,Values]=ImageOrientation2D(projection,sigma,window);
+[J11,J12,J21,J22]=ImageOrientation2D_conv(projection,sigma,window);
 interpol_window=5;
 c=0.5;
 treshold1=0.001;
